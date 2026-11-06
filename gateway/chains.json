@@ -1,0 +1,5 @@
+[
+  { "id": "sim-alpha", "type": "simulated", "confirmMs": 1500, "submitFailRate": 0.2, "revertRate": 0 },
+  { "id": "sim-beta",  "type": "simulated", "confirmMs": 3000, "submitFailRate": 0,   "revertRate": 0.1 },
+  { "id": "sepolia",   "type": "evm", "rpcUrl": "https://rpc.sepolia.org", "confirmations": 2, "enabled": false }
+]

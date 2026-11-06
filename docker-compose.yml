@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: relay, POSTGRES_PASSWORD: relay, POSTGRES_DB: relay }
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U relay"], interval: 3s, retries: 20 }
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  verifier:            # Rust: parallel Ed25519 verification + SHA-256 digests
+    build: ./verifier
+    environment: { VERIFIER_ADDR: "0.0.0.0:7001" }
+
+  api:                 # Node.js: public HTTP API
+    build: ./gateway
+    environment: &gw
+      ROLE: api
+      DATABASE_URL: postgres://relay:relay@postgres:5432/relay
+      VERIFIER_URL: http://verifier:7001
+      API_KEYS: dev-key
+    ports: ["8080:8080"]
+    depends_on: { postgres: { condition: service_healthy }, verifier: { condition: service_started } }
+
+  worker:              # Node.js: relay + confirmation workers. Scale: docker compose up --scale worker=4
+    build: ./gateway
+    environment: { <<: *gw, ROLE: worker }
+    depends_on: { postgres: { condition: service_healthy }, verifier: { condition: service_started } }
+
+volumes:
+  pgdata:
